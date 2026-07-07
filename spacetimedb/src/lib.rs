@@ -1,0 +1,58 @@
+use std::time::Duration;
+use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+
+#[spacetimedb::table(accessor = config, public)]
+pub struct Config {
+    #[primary_key]
+    pub id: i32,
+    pub world_size: i64,
+}
+
+#[derive(SpacetimeType, Clone, Debug)]
+pub struct DbVector2 {
+    pub x: f32,
+    pub y: f32,
+}
+
+#[spacetimedb::table(accessor = entity, public)]
+#[derive(Debug, Clone)]
+pub struct Entity {
+    #[primary_key]
+    pub entity_id: i32,
+    pub position: DbVector2,
+    pub mass: i32,
+}
+
+#[spacetimedb::table(accessor = circle, public)]
+pub struct Circle {
+    #[primary_key]
+    pub entity_id: i32,
+    #[index(btree)]
+    pub player_id: i32,
+    pub direction: DbVector2,
+    pub speed: f32,
+    pub last_split_time: Timestamp,
+}
+
+#[spacetimedb::table(accessor = food, public)]
+pub struct Food {
+    #[primary_key]
+    pub entity_id: i32
+}
+
+#[spacetimedb::table(accessor = player, public)]
+#[derive(Debug, Clone)]
+pub struct Player {
+    #[primary_key]
+    pub identity: Identity,
+    #[unique]
+    #[auto_inc]
+    player_id: i32,
+    name: String,
+}
+
+#[spacetimedb::reducer(client_connected)]
+pub fn connect(ctx: &ReducerContext) -> Result<(), String> {
+    log::debug!("{} just connected", ctx.sender());
+    Ok(())
+}
